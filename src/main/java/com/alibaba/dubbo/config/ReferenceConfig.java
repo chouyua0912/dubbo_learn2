@@ -56,7 +56,7 @@ import java.util.Properties;
 import static com.alibaba.dubbo.common.utils.NetUtils.isInvalidLocalHost;
 
 /**
- * ReferenceConfig
+ * ReferenceConfig  factoryBean, 容器初始化过程中会被实例化 FactoryBean本身是否会存在容器里?
  *
  * @export
  */
@@ -191,7 +191,7 @@ public class ReferenceConfig<T> extends AbstractReferenceConfig {
             throw new IllegalStateException("<dubbo:reference interface=\"\" /> interface not allow null!");
         }
         // get consumer's global configuration
-        checkDefault();
+        checkDefault();                                                 // 设置默认参数
         appendProperties(this);
         if (getGeneric() == null && getConsumer() != null) {
             setGeneric(getConsumer().getGeneric());
@@ -209,7 +209,7 @@ public class ReferenceConfig<T> extends AbstractReferenceConfig {
         }
         String resolve = System.getProperty(interfaceName);
         String resolveFile = null;
-        if (resolve == null || resolve.length() == 0) {
+        if (resolve == null || resolve.length() == 0) {                     // 处理resolveFile相关配置  /home/z/dubbo-resolve.properties
             resolveFile = System.getProperty("dubbo.resolve.file");
             if (resolveFile == null || resolveFile.length() == 0) {
                 File userResolveFile = new File(new File(System.getProperty("user.home")), "dubbo-resolve.properties");
@@ -330,7 +330,7 @@ public class ReferenceConfig<T> extends AbstractReferenceConfig {
 
         //attributes are stored by system context.
         StaticContext.getSystemContext().putAll(attributes);
-        ref = createProxy(map);
+        ref = createProxy(map);                                         // 创建代理对象
         ConsumerModel consumerModel = new ConsumerModel(getUniqueServiceName(), this, ref, interfaceClass.getMethods());
         ApplicationModel.initConsumerModel(getUniqueServiceName(), consumerModel);
     }
@@ -339,7 +339,7 @@ public class ReferenceConfig<T> extends AbstractReferenceConfig {
     private T createProxy(Map<String, String> map) {
         URL tmpUrl = new URL("temp", "localhost", 0, map);
         final boolean isJvmRefer;
-        if (isInjvm() == null) {
+        if (isInjvm() == null) {            // 初始化 inJvm isJvmRefer属性
             if (url != null && url.length() > 0) { // if a url is specified, don't do local reference
                 isJvmRefer = false;
             } else if (InjvmProtocol.getInjvmProtocol().isInjvmRefer(tmpUrl)) {
@@ -352,13 +352,13 @@ public class ReferenceConfig<T> extends AbstractReferenceConfig {
             isJvmRefer = isInjvm().booleanValue();
         }
 
-        if (isJvmRefer) {
+        if (isJvmRefer) {           // JVM虚拟机内部方法调用?
             URL url = new URL(Constants.LOCAL_PROTOCOL, NetUtils.LOCALHOST, 0, interfaceClass.getName()).addParameters(map);
             invoker = refprotocol.refer(interfaceClass, url);
             if (logger.isInfoEnabled()) {
                 logger.info("Using injvm service " + interfaceClass.getName());
             }
-        } else {
+        } else {                    // 远程调用, 不同JVM虚拟机方法调用
             if (url != null && url.length() > 0) { // user specified URL, could be peer-to-peer address, or register center's address.
                 String[] us = Constants.SEMICOLON_SPLIT_PATTERN.split(url);
                 if (us != null && us.length > 0) {
@@ -390,9 +390,9 @@ public class ReferenceConfig<T> extends AbstractReferenceConfig {
                 }
             }
 
-            if (urls.size() == 1) {
-                invoker = refprotocol.refer(interfaceClass, urls.get(0));
-            } else {
+            if (urls.size() == 1) {     // 单台
+                invoker = refprotocol.refer(interfaceClass, urls.get(0));       // 根据Protocol 创建出来Invoker
+            } else {                    // 多个提供服务的点,集群模式
                 List<Invoker<?>> invokers = new ArrayList<Invoker<?>>();
                 URL registryURL = null;
                 for (URL url : urls) {
@@ -425,7 +425,7 @@ public class ReferenceConfig<T> extends AbstractReferenceConfig {
             logger.info("Refer dubbo service " + interfaceClass.getName() + " from url " + invoker.getUrl());
         }
         // create service proxy
-        return (T) proxyFactory.getProxy(invoker);
+        return (T) proxyFactory.getProxy(invoker);      // MockClusterInvoker
     }
 
     private void checkDefault() {

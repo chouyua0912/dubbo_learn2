@@ -1,0 +1,11 @@
+# Spring配置解析
+DubboNamespaceHandler
+DubboBeanDefinitionParser
+
+ReferenceConfig.get() T
+  init()
+     createProxy()
+
+
+AbstractProxyFactory.getProxy(Invoker<T> invoker)
+   JavassistProxyFactory.getProxy(Invoker<T> invoker, Class<?>[] types)
